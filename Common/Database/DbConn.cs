@@ -10,13 +10,12 @@ namespace Common.Database
 
         public static DbConn? Factory(ConsoleVariables cVars)
         {
-            string address = cVars.GetCVar("db.address", ConsoleVariableType.String, "127.0.0.1");
+            string address  = cVars.GetCVar("db.address", ConsoleVariableType.String, "127.0.0.1");
             string database = cVars.GetCVar("db.name", ConsoleVariableType.String, "DiscordSharded");
-            string username = cVars.GetCVar("db.user", ConsoleVariableType.String, "sa");
-            string password = cVars.GetCVar("db.password", ConsoleVariableType.String, "Redemption92554477");
+            string username = cVars.GetCVar("db.user", ConsoleVariableType.String, "censored");
+            string password = cVars.GetCVar("db.password", ConsoleVariableType.String, "censored");            
 
-            string connectionString = $"Server={address}; Database={database};Trusted_Connection=True; User Id={username}; Password={password};";
-
+            string connectionString = $"Server={address}; Database={database}; User Id={username}; Password={password}; Encrypt=True; TrustServerCertificate=True;";
             try
             {
                 return new DbConn(connectionString);

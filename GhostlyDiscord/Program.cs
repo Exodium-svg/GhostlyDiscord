@@ -9,6 +9,7 @@ using Common.Files;
 using Discord.Commands;
 using System.Reflection;
 using Discord.Interactions;
+using Common.Database;
 
 internal class Progam
 {
@@ -37,7 +38,7 @@ internal class Progam
         await client.StartAsync();
         
         CommandHandler commandHandler = new CommandHandler();
-
+        DbConn? dbConn = DbConn.Factory(cVars);
         commandHandler.RegisterCommand(new ConsoleSetCVar());
         commandHandler.Start();
 
