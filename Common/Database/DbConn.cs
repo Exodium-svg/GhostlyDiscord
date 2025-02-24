@@ -1,6 +1,7 @@
 ﻿using Common.Utils;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Data.Common;
 
 namespace Common.Database
 {
@@ -33,6 +34,39 @@ namespace Common.Database
             _conn.Open();
         }
 
+        //TODO: find a better solution PLS PLS PLS this is unboxing land
+        public async Task<List<object[]>?> ExecuteQuery(string query)
+        {
+            using SqlTransaction transaction = _conn.BeginTransaction();
+            try
+            {
+                using SqlCommand command = _conn.CreateCommand();
+                command.CommandText = query;
+                command.Transaction = transaction;
+
+                using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+                List<object[]> values = new List<object[]>();
+                object[] rowValues = new object[reader.FieldCount];
+
+                while (await reader.ReadAsync())
+                {
+                    reader.GetValues(rowValues);
+                    values.Add(rowValues);
+                }
+
+                await reader.CloseAsync();
+                await transaction.CommitAsync();
+
+                return values;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"DbConn.ExecuteQuery failed {ex.Message}");
+                await transaction.RollbackAsync();
+                return null;
+            }
+        }
         public async Task<int> ExecuteNonResultProcedure(string procedure, Dictionary<string, object> values)
         {
             using SqlCommand command = _conn.CreateCommand();

@@ -5,19 +5,22 @@ using Common.Utils;
 using GhostlyDiscord.xDiscord;
 using Common.ConsoleCommands;
 using GhostlyDiscord.ConsoleCommands.Commands;
-using Common.Files;
-using Discord.Commands;
-using System.Reflection;
-using Discord.Interactions;
+using Common.Database.ModelManagers;
 using Common.Database;
+using Microsoft.Data.SqlClient;
 
 internal class Progam
 {
-    private static InteractionService commandService;
     public static async Task Main()
     {
         ConsoleVariables cVars = new("cVars");
         string token = cVars.GetCVar<string>("discord.token", ConsoleVariableType.String, "NULL");
+
+
+        bool validDb = await ValidateDbConnection(cVars);
+
+        if(!validDb)
+            Environment.Exit(1);
 
         DiscordSocketConfig config = new DiscordSocketConfig();
         //config.TotalShards = int.Parse(args[0]);
@@ -27,19 +30,15 @@ internal class Progam
         DiscordShardedClient client = new DiscordShardedClient(config);
 
         await Globals.Init(cVars, client);
-
-        await client.LoginAsync(TokenType.Bot, token);
-
-        if(client.LoginState != LoginState.LoggedIn)
-            throw new Exception($"Invalid credentials? unable to login.");
-
-        // setup shizzle for events.
+        InitDbManagers(cVars);
         SetupEvents(client);
-        await client.StartAsync();
-        
-        CommandHandler commandHandler = new CommandHandler();
-        DbConn? dbConn = DbConn.Factory(cVars);
-        commandHandler.RegisterCommand(new ConsoleSetCVar());
+
+        ConsoleCommandHandler commandHandler = new ConsoleCommandHandler();
+
+        RegisterCommands(commandHandler);
+
+
+        await SetupClient(client, token, cVars);
         commandHandler.Start();
 
         using FileStream fStream = File.OpenWrite("cVars");
@@ -47,8 +46,50 @@ internal class Progam
 
         fStream.Close();
     }
+    private static async Task<bool> ValidateDbConnection(ConsoleVariables cVars)
+    {
+        using DbConn? dbConn = DbConn.Factory(cVars);
 
+        if (dbConn == null)
+        {
+            Console.WriteLine("Db connection is invalid!");
+            return false;
+        }
+        else
+        {
+            List<object[]>? data = await dbConn.ExecuteQuery("SELECT @@VERSION;");
 
+            if (data == null)
+            {
+                Console.WriteLine("Db is not MSSQL?");
+                return false;
+            }
+
+            Console.WriteLine(data[0][0] as string);
+        }
+
+        return true;
+    }
+    private static async Task SetupClient(DiscordShardedClient client, string token, ConsoleVariables cVars)
+    {
+        await client.LoginAsync(TokenType.Bot, token);
+
+        if (client.LoginState != LoginState.LoggedIn)
+            throw new Exception($"Invalid credentials? unable to login.");
+        
+        await client.StartAsync();
+    }
+    private static void InitDbManagers(ConsoleVariables cVars)
+    {
+        DbGuildManager.Init(cVars);
+        DbRoleMenuManager.Init(cVars);
+    }
+
+    private static void RegisterCommands(ConsoleCommandHandler commandHandler)
+    {
+        commandHandler.RegisterCommand(new ConsoleSetCVar());
+
+    }
     private static void SetupEvents(DiscordShardedClient client)
     {
 

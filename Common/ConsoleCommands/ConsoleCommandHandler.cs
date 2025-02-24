@@ -1,6 +1,6 @@
 ﻿namespace Common.ConsoleCommands
 {
-    public sealed class CommandHandler()
+    public sealed class ConsoleCommandHandler()
     {
         readonly Dictionary<string, IConsoleCommand> _commandsMap = new();
         public void Start()

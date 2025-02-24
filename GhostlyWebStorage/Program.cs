@@ -16,7 +16,7 @@ internal class Program
         webThread.Name = "Main/Web";
         webThread.Start();
 
-        CommandHandler commandHandler = new CommandHandler();
+        ConsoleCommandHandler commandHandler = new ConsoleCommandHandler();
 
         commandHandler.Start();
     }
