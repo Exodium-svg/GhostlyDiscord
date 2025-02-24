@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "GhostlyDiscord": {
+      "commandName": "Project",
+      "commandLineArgs": "1 1"
+    }
+  }
+}
