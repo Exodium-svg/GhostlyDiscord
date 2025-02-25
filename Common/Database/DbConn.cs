@@ -9,7 +9,7 @@ namespace Common.Database
     {
         readonly SqlConnection _conn;
 
-        public static DbConn? Factory(ConsoleVariables cVars)
+        public static async Task<DbConn?> Factory(ConsoleVariables cVars)
         {
             string address  = cVars.GetCVar("db.address", ConsoleVariableType.String, "127.0.0.1");
             string database = cVars.GetCVar("db.name", ConsoleVariableType.String, "DiscordSharded");
@@ -19,7 +19,9 @@ namespace Common.Database
             string connectionString = $"Server={address}; Database={database}; User Id={username}; Password={password}; Encrypt=True; TrustServerCertificate=True;";
             try
             {
-                return new DbConn(connectionString);
+                DbConn conn  = new DbConn(connectionString);
+                await conn._conn.OpenAsync();
+                return conn;
             }
             catch (Exception)
             {
@@ -31,7 +33,6 @@ namespace Common.Database
         internal DbConn(string connectionString)
         {
             _conn = new SqlConnection(connectionString);
-            _conn.Open();
         }
 
         //TODO: find a better solution PLS PLS PLS this is unboxing land
@@ -79,13 +80,13 @@ namespace Common.Database
 
             return await command.ExecuteNonQueryAsync();
         }
-        public async Task<SqlDataReader> ExecuteResultProcedure(string procedure, Dictionary<string, object> values)
+        public async Task<SqlDataReader> ExecuteResultProcedure(string procedure, Dictionary<string, object?> values)
         {
             using SqlCommand command = _conn.CreateCommand();
             command.CommandType = CommandType.StoredProcedure;
             command.CommandText = procedure;
 
-            foreach (KeyValuePair<string, object> kvp in values)
+            foreach (KeyValuePair<string, object?> kvp in values)
                 command.Parameters.AddWithValue(kvp.Key, kvp.Value);
 
             return await command.ExecuteReaderAsync();

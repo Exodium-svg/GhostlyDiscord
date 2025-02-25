@@ -48,7 +48,7 @@ internal class Progam
     }
     private static async Task<bool> ValidateDbConnection(ConsoleVariables cVars)
     {
-        using DbConn? dbConn = DbConn.Factory(cVars);
+        using DbConn? dbConn = await DbConn.Factory(cVars);
 
         if (dbConn == null)
         {
@@ -92,10 +92,14 @@ internal class Progam
     }
     private static void SetupEvents(DiscordShardedClient client)
     {
+        client.ReactionAdded += DiscordEvents.OnReactionAdded;
+        client.UserJoined    += DiscordEvents.OnUserJoined;
+        client.ShardReady    += DiscordEvents.OnShardReady;
+        client.JoinedGuild   += DiscordEvents.OnJoinedGuild;
+    }
 
-
-        client.UserJoined  += DiscordEvents.OnUserJoined;
-        client.ShardReady  += DiscordEvents.OnShardReady;
-        client.JoinedGuild += DiscordEvents.OnJoinedGuild;
+    private static Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
+    {
+        throw new NotImplementedException();
     }
 }

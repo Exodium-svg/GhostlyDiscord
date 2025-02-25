@@ -14,7 +14,7 @@ namespace Common.Database.ModelManagers
         }
         public static async Task<DbGuild?> GetGuildFromDb(ulong guildSnowflake)
         {
-            using DbConn? conn = DbConn.Factory(_cVars);
+            using DbConn? conn = await DbConn.Factory(_cVars);
 
             if (conn == null) return null;
 
@@ -34,7 +34,7 @@ namespace Common.Database.ModelManagers
         }
         public static async Task<DbGuildSettings?> GetGuildSettingsFromDb(ulong guildSnowflake)
         {
-            using DbConn? conn = DbConn.Factory(_cVars);
+            using DbConn? conn = await DbConn.Factory(_cVars);
 
             if (conn == null) return null;
 

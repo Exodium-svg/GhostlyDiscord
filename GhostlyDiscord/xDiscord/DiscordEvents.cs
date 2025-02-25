@@ -1,6 +1,7 @@
 ﻿using Common.Database.ModelManagers;
 using Common.Database.Models;
 using Common.Files;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using System.Text;
@@ -9,6 +10,47 @@ namespace GhostlyDiscord.xDiscord
 {
     public static class DiscordEvents
     {
+        public static async Task OnReactionAdded(Cacheable<IUserMessage, ulong> cachableMessage, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
+            SocketTextChannel? textChannel = await channel.GetOrDownloadAsync() as SocketTextChannel;
+
+            if (!reaction.User.IsSpecified) return;
+            if (textChannel == null) return;
+            if (textChannel is not SocketGuildChannel) return;
+
+            IUserMessage message = await cachableMessage.GetOrDownloadAsync();
+
+            ulong guildSnowflake = textChannel.Guild.Id;
+            ulong messageSnowflake = message.Id;
+
+            DbRoleMenu? menu = await DbRoleMenuManager.GetRolemenu(guildSnowflake, messageSnowflake, null);
+
+            if (menu == null)
+                return;
+
+            if (!menu.EmojiRoleMap.TryGetValue(reaction.Emote.Name, out ulong roleSnowflake))
+                return;
+
+            SocketGuild guild = textChannel.Guild;
+            SocketGuildUser? user = guild.GetUser(reaction.UserId);
+            if(user == null)
+            {
+                Console.WriteLine("Failed to get user from guild.");
+                return;
+            }
+
+            SocketRole? role = guild.GetRole(roleSnowflake);
+
+            if(role == null)
+            {
+                await guild.Owner.SendMessageAsync($"Role menu {menu.MenuName} has an invalid role (deleted role?) this is a one time message letting you know it will be removed.");
+                menu.EmojiRoleMap.Remove(reaction.Emote.Name);
+
+                await DbRoleMenuManager.UpdateRoleMenu(menu);
+                return;
+            }
+
+            await user.AddRoleAsync(roleSnowflake);
+        }
         public static async Task OnInteractionCreated(SocketInteraction interaction)
         {
             ShardedInteractionContext context = new ShardedInteractionContext(Globals.DiscordShardedClient, interaction);
@@ -19,7 +61,7 @@ namespace GhostlyDiscord.xDiscord
         }
         public static async Task OnJoinedGuild(SocketGuild guild)
         {
-
+            Console.WriteLine($"Added to new guild {guild.Name}");
         }
         public static async Task OnShardReady(DiscordSocketClient client)
         {
@@ -45,7 +87,6 @@ namespace GhostlyDiscord.xDiscord
                 return;
             
             SocketGuild socketGuild = guildUser.Guild;
-            // TODO: need to retrieve guild settings from MSSQL
             string html = string.Empty;
             WebFile? file = await Globals.FileManager.GetFileAsync(socketGuild.Id.ToString(), "welcome.html");
 

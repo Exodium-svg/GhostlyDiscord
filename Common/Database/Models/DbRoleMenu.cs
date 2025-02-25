@@ -9,9 +9,9 @@ namespace Common.Database.Models
         public string MenuName { get; set; }
         public ulong MessageSnowflake { get; set; }
         public DateTime CreationDate { get; init; } // can't change.
-        public Dictionary<ulong, ulong> EmojiRoleMap { get; set; } // Also will be turned into menu data
+        public Dictionary<string, ulong> EmojiRoleMap { get; set; } // Also will be turned into menu data
 
-        public DbRoleMenu(long id, long guildId, string menuName, ulong messageSnowflake, DateTime creationDate, in byte[] binaryData)
+        public DbRoleMenu(long id, long guildId, string menuName, ulong messageSnowflake, DateTime creationDate, Stream stream)
         {
             Id = id;
             GuildId = guildId;
@@ -20,16 +20,14 @@ namespace Common.Database.Models
             CreationDate = creationDate;
             EmojiRoleMap = new();
 
-            using MemoryStream stream = new MemoryStream(binaryData);
-
             int count = stream.Read<int>();
 
             for(int i = 0; i < count; i++)
             {
-                ulong emojiSnowflake = stream.Read<ulong>();
+                string emojiName = stream.ReadString();
                 ulong roleSnowflake = stream.Read<ulong>();
 
-                EmojiRoleMap[emojiSnowflake] = roleSnowflake;
+                EmojiRoleMap[emojiName] = roleSnowflake;
             }
         }
 
@@ -39,9 +37,9 @@ namespace Common.Database.Models
 
             stream.Write<int>(EmojiRoleMap.Count);
 
-            foreach(KeyValuePair<ulong, ulong> kvp in EmojiRoleMap)
+            foreach(KeyValuePair<string, ulong> kvp in EmojiRoleMap)
             {
-                stream.Write(kvp.Key);
+                stream.WriteString(kvp.Key);
                 stream.Write(kvp.Value);
             }
 
