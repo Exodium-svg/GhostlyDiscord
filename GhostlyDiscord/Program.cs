@@ -97,9 +97,4 @@ internal class Progam
         client.ShardReady    += DiscordEvents.OnShardReady;
         client.JoinedGuild   += DiscordEvents.OnJoinedGuild;
     }
-
-    private static Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
-    {
-        throw new NotImplementedException();
-    }
 }

@@ -14,6 +14,10 @@ namespace Common.Database.ModelManagers
         {
             using DbConn? conn = await DbConn.Factory(_cVars);
 
+            if(messageSnowflake == null && menuName == null)
+                throw new InvalidOperationException("When retrieving a role menu a message snowflake OR menu has to be specified");
+            
+
             if (conn == null)
                 return null;
 
@@ -38,7 +42,7 @@ namespace Common.Database.ModelManagers
 
         public static async Task<bool> CreateRoleMenu(ulong guildSnowflake, ulong messageSnowflake, string menuName, byte[] data)
         {
-            DbConn? conn = await DbConn.Factory(_cVars);
+            using DbConn? conn = await DbConn.Factory(_cVars);
 
             if (conn == null)
                 return false;
@@ -53,7 +57,18 @@ namespace Common.Database.ModelManagers
         }
         public static async Task<bool> UpdateRoleMenu(DbRoleMenu menu)
         {
+            using DbConn? conn = await DbConn.Factory(_cVars);
 
+            if (conn == null)
+                return false;
+
+            return await conn.ExecuteNonResultProcedure(Procedures.UpdateRoleMenu, new Dictionary<string, object>()
+            {
+                ["@id"] = menu.Id,
+                ["@menu_name"] = menu.MenuName,
+                ["@message_snowflake"] = menu.MessageSnowflake,
+                ["@menu_data"] = menu.GetEmojiRoleBinary().ToArray(),
+            }) == 1;
         }
     }
 }

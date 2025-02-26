@@ -7,5 +7,6 @@
         public const string GetGuildSetting = "GetGuildSettings";
         public const string GetRoleMenu = "GetRoleMenu";
         public const string CreateRoleMenu = "CreateRoleMenu";
+        public const string UpdateRoleMenu = "UpdateRoleMenu";
     }
 }
