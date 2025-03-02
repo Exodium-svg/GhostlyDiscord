@@ -6,7 +6,8 @@ namespace Common.Utils
     public class ConsoleVariables
     {
         private readonly ConcurrentDictionary<string, ConsoleVariable> _cVars = new();
-
+        public int Count => _cVars.Count;
+        public ConcurrentDictionary<string, ConsoleVariable> CVars => _cVars;
         public ConsoleVariables(string? path = null)
         {
             if (path == null)

@@ -25,8 +25,8 @@ internal class Program
     {
         HttpListener listener = new();
 
-        int port = cVars.GetCVar("website.port", ConsoleVariableType.Int, 6789);
-        string url = cVars.GetCVar("website.url", ConsoleVariableType.String, "localhost");
+        int port = cVars.GetCVar("website.port", ConsoleVariableType.Int, 80);
+        string url = cVars.GetCVar("website.url", ConsoleVariableType.String, "51.15.15.33");
 
         string webPrefix = $"http://{url}:{port}";
         listener.Prefixes.Add($"{webPrefix}/storage/");

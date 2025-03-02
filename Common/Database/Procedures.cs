@@ -8,5 +8,6 @@
         public const string GetRoleMenu = "GetRoleMenu";
         public const string CreateRoleMenu = "CreateRoleMenu";
         public const string UpdateRoleMenu = "UpdateRoleMenu";
+        public const string CreateSession = "CreateSession";
     }
 }

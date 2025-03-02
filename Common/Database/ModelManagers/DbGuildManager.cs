@@ -18,10 +18,10 @@ namespace Common.Database.ModelManagers
 
             if (conn == null) return null;
 
-            Dictionary<string, object> parameters = new();
-            parameters["@guild_id"] = guildSnowflake;
-
-            using SqlDataReader reader = await conn.ExecuteResultProcedure(Procedures.GetGuild, parameters);
+            using SqlDataReader reader = await conn.ExecuteResultProcedure(Procedures.GetGuild, new Dictionary<string, object?>()
+            {
+                ["@guild_id"] = guildSnowflake
+            });
 
             await reader.ReadAsync();
 
@@ -38,10 +38,10 @@ namespace Common.Database.ModelManagers
 
             if (conn == null) return null;
 
-            Dictionary<string, object> parameters = new();
-            parameters["@guild_id"] = guildSnowflake;
-
-            using SqlDataReader reader = await conn.ExecuteResultProcedure(Procedures.GetGuildSetting, parameters);
+            using SqlDataReader reader = await conn.ExecuteResultProcedure(Procedures.GetGuildSetting, new Dictionary<string, object?>()
+            {
+                ["@guild_id"] = guildSnowflake,
+            });
 
             await reader.ReadAsync();
 
