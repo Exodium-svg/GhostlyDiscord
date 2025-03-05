@@ -4,12 +4,16 @@ using System.Web;
 using WatsonWebserver;
 using WatsonWebserver.Core;
 using Website;
+using Website.Endpoints;
+
+using HttpMethod = WatsonWebserver.Core.HttpMethod;
 internal class Program
 {
     public static async Task Main()
     {
         ConsoleVariables cVars = new("cVars");
-
+        DbSessionManager.Init(cVars);
+        DiscordApi.Init(cVars);
         string host = cVars.GetCVar<string>("web.host", ConsoleVariableType.String, "127.0.0.1");
         int port = cVars.GetCVar<int>("web.port", ConsoleVariableType.Int, 80);
         //int port = cVars.GetCVar<int>("web.port", ConsoleVariableType.Int, 26652);
@@ -20,9 +24,14 @@ internal class Program
         using Webserver server = new Webserver(settings, DefaultRoute);
 
         Globals.Init(cVars, server);
-        server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/dashboard/", DashboardRoute, MyExceptionRoute);
-        server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/discord/redirect", DiscordRedirect, MyExceptionRoute);
-        server.Routes.PreAuthentication.Static.Add(WatsonWebserver.Core.HttpMethod.GET, "/up/", GetStatisticsRoute, MyExceptionRoute);
+
+        DiscordEndpoint discordEp = new(cVars);
+
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/dashboard/", DashboardRoute, OnErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/redirect", discordEp.Redirect, OnErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/profile", discordEp.Profile, OnErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/guilds", discordEp.Guilds, OnErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/up/", GetStatisticsRoute, OnErrorRoute);
 
         server.Routes.PreRouting = PreRoute;
         await server.StartAsync();
@@ -31,37 +40,16 @@ internal class Program
         Console.ReadKey();
     }
 
-    static async Task MyExceptionRoute(HttpContextBase ctx, Exception e)
+    static async Task OnErrorRoute(HttpContextBase ctx, Exception e)
     {
-        ctx.Response.StatusCode = 500;
-        await ctx.Response.Send(await Views.Get("error-page.html", new Dictionary<string, object>()
-        {
-            ["errorcode"] = 500,
-            ["text"] = e.Message
-        }));
-    }
-    static async Task DiscordRedirect(HttpContextBase ctx)
-    {
-        string? code = ctx.Request.Url.Parameters.Get("code");
+        int errorCode = 500;
 
-        if(code == null)
-        {
-            await ctx.Response.Send(await Views.Get("error-page.html", new Dictionary<string, object>()
-            {
-                ["errorcode"] = 400,
-                ["text"] = "invalid query"
-            }));
-            return;
-        }
+        if (e is HttpProtocolException httpExcept)
+            errorCode = (int)httpExcept.ErrorCode;
 
-        Dictionary<string, object?> response = await DiscordApi.AuthenticateUser(code);
+        ctx.Response.StatusCode = errorCode;
 
-        string token = await DbSessionManager.Create();
-
-        ctx.Response.StatusCode = 301;
-        ctx.Response.Headers["token"] = token;
-        ctx.Response.Headers["Location"] = $"/dashboard?code={response["access_token"]}";
-        await ctx.Response.Send("Redirecting");
+        await ctx.Response.Send(await Views.GetErrorPage(errorCode, e.Message));
     }
     static async Task DashboardRoute(HttpContextBase ctx) => await ctx.Response.Send(await Views.Get("dashboard.html"));
     static async Task GetStatisticsRoute(HttpContextBase ctx)
@@ -128,11 +116,7 @@ internal class Program
 
         await ctx.Response.Send(html);
     }
-    static async Task DefaultRoute(HttpContextBase ctx) => await ctx.Response.Send(await Views.Get("error-page.html", new Dictionary<string, object>()
-    {
-        ["errorcode"] = 404,
-        ["text"] = "The page you are looking for might have been removed, had its name changed or is temporarily unavailable.",
-    }));
+    static Task DefaultRoute(HttpContextBase ctx) => throw new HttpProtocolException(404, "Route not found", null);
     static async Task PreRoute(HttpContextBase ctx)
     {
         string requestPath = ctx.Request.Url.RawWithoutQuery.TrimStart('/'); // Remove leading '/'

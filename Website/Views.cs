@@ -8,6 +8,14 @@ namespace Website
         private static FluidParser _parser = new();
         const string path = "public/templates/";
 
+        public static async Task<string> GetErrorPage(int errorCode, string text)
+        {
+            return await Views.Get("error-page.html", new Dictionary<string, object>()
+            {
+                ["errorcode"] = errorCode,
+                ["text"] = text
+            });
+        }
         public static async Task<string> Get(string viewName, Dictionary<string, object>? values = null)
         {
             string viewPath = Path.Combine(path, viewName);
