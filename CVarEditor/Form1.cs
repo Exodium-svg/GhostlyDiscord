@@ -102,5 +102,10 @@ namespace CVarEditor
 
             MessageBox.Show("CVar file saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+
+        private void cVarGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
     }
 }

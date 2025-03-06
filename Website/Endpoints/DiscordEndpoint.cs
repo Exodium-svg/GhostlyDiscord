@@ -59,6 +59,55 @@ namespace Website.Endpoints
             await context.Response.Send(jsonGuilds);
         }
 
+        public async Task GetWelcomeSettings(HttpContextBase context)
+        {
+            if (!ulong.TryParse(GetQueryParameter(context, "guildId"), out ulong guildSnowflake))
+                throw new HttpProtocolException(400, "Invalid snowflake", null);
+
+            DbGuildSettings? settings = await DbGuildManager.GetGuildSettingsFromDb(guildSnowflake);
+
+            if (settings == null)
+                throw new HttpProtocolException(400, "Unknown snowflake", null);
+
+            await context.Response.Send(JsonSerializer.Serialize<DbGuildSettings>(settings, new JsonSerializerOptions() { WriteIndented = true }));
+        }
+
+        public async Task UpdateWelcome(HttpContextBase context)
+        {
+            await using DbSession session = await GetSession(context);
+
+            string guildId = GetQueryParameter(context, "guildId");
+            bool useWelcome = GetQueryParameterNullable(context, "useWelcome") == "true";
+            string? channelSnowflake = GetQueryParameterNullable(context, "welcomeChannel");
+
+            ulong welcomeChannel = 0;
+
+            if(channelSnowflake != null)
+                if (!ulong.TryParse(GetQueryParameter(context, "welcomeChannel"), out welcomeChannel))
+                    throw new HttpProtocolException(400, "Invalid channel ID is not a snowflake", null);
+
+            if (!session.Get("discord.user.id", out string? userId))
+                throw new Exception("UserID missing from session?");
+
+            bool hasPermission = await DiscordApi.UserHasPermission(guildId, userId!, DiscordPermissions.ManageGuild, GetToken(context));
+
+            if (!hasPermission)
+                throw new HttpProtocolException(400, "Not allowed", null);
+
+            DbGuildSettings? settings = await DbGuildManager.GetGuildSettingsFromDb(ulong.Parse(guildId));
+
+            if (settings == null)
+                throw new Exception("Failed to retrieve settings");
+
+            settings.UseWelcome = useWelcome;
+
+            if(channelSnowflake != null)
+                settings.WelcomeChannel = welcomeChannel;
+
+            await DbGuildManager.UpdateGuildSettings(settings);
+
+            context.Response.StatusCode = 201;
+        }
         private string GetDiscordToken(DbSession session)
         {
             if (!session.Get("discord.token", out string? token))

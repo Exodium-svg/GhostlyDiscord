@@ -67,14 +67,14 @@ namespace Common.Database
                 return null;
             }
         }
-        public async Task<int> ExecuteNonResultProcedure(string procedure, Dictionary<string, object> values)
+        public async Task<int> ExecuteNonResultProcedure(string procedure, Dictionary<string, object?> values)
         {
             using SqlCommand command = _conn.CreateCommand();
 
             command.CommandType = CommandType.StoredProcedure;
             command.CommandText = procedure;
 
-            foreach (KeyValuePair<string, object> kvp in values)
+            foreach (KeyValuePair<string, object?> kvp in values)
                 command.Parameters.AddWithValue(kvp.Key, kvp.Value);
 
             return await command.ExecuteNonQueryAsync();

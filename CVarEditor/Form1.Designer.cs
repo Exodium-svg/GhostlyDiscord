@@ -58,14 +58,14 @@
             // openToolStripMenuItem
             // 
             openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.Size = new Size(180, 22);
+            openToolStripMenuItem.Size = new Size(103, 22);
             openToolStripMenuItem.Text = "Open";
             openToolStripMenuItem.Click += OpenFilePathWindow;
             // 
             // saveToolStripMenuItem
             // 
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            saveToolStripMenuItem.Size = new Size(180, 22);
+            saveToolStripMenuItem.Size = new Size(103, 22);
             saveToolStripMenuItem.Text = "Save";
             saveToolStripMenuItem.Click += SaveFilePathWindow;
             // 
@@ -78,6 +78,7 @@
             cVarGrid.Size = new Size(800, 423);
             cVarGrid.TabIndex = 1;
             cVarGrid.UseWaitCursor = true;
+            cVarGrid.CellContentClick += cVarGrid_CellContentClick;
             // 
             // openFileDialog1
             // 

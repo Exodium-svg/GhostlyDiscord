@@ -7,8 +7,7 @@ namespace Website.Endpoints
 {
     public abstract class BaseEndpoint
     {
-        //List<Func<HttpContextBase,Task>> 
-        protected string? GetToken(HttpContextBase context) => context.Request.Headers.Get("token");
+        protected string GetToken(HttpContextBase context) => context.Request.Headers.Get("token") ?? throw new HttpProtocolException(400, "Missing token", null);
         protected string GetQueryParameter(HttpContextBase context, string key)
         {
             string? parameter = context.Request.Query.Elements.Get(key);
@@ -18,6 +17,9 @@ namespace Website.Endpoints
 
             return parameter;
         }
+
+        protected string? GetQueryParameterNullable(HttpContextBase context, string key) => context.Request.Query.Elements.Get(key);
+
         protected async Task<DbSession> GetSession(HttpContextBase context)
         {
             string? token = GetToken(context);

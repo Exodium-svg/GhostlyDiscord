@@ -49,7 +49,7 @@ namespace Common.Database.ModelManagers
 
             using MemoryStream stream = new MemoryStream();
 
-            int result = await dbConn.ExecuteNonResultProcedure(Procedures.UpdateSession, new Dictionary<string, object>
+            int result = await dbConn.ExecuteNonResultProcedure(Procedures.UpdateSession, new Dictionary<string, object?>
             {
                 ["@id"] = session.Id,
                 ["@data"] = session.Serialize(),

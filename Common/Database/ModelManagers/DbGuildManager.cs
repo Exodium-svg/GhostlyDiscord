@@ -40,7 +40,7 @@ namespace Common.Database.ModelManagers
 
             using SqlDataReader reader = await conn.ExecuteResultProcedure(Procedures.GetGuildSetting, new Dictionary<string, object?>()
             {
-                ["@guild_id"] = guildSnowflake,
+                ["@guild_snowflake"] = (long)guildSnowflake,
             });
 
             await reader.ReadAsync();
@@ -54,6 +54,21 @@ namespace Common.Database.ModelManagers
                 welcomeChannel = (ulong)reader.GetInt64("welcome_channel");
 
             return new DbGuildSettings(id, guildId, useWelcome, welcomeChannel);
+        }
+        public static async Task<bool> UpdateGuildSettings(DbGuildSettings settings)
+        {
+            using DbConn? conn = await DbConn.Factory(_cVars);
+
+            if(conn == null) return false;
+
+            int result = await conn.ExecuteNonResultProcedure(Procedures.UpdateGuildSettings, new Dictionary<string, object?>
+            {
+                ["@id"] = settings.Id,
+                ["@use_welcome"] = settings.UseWelcome ? 1 : 0,
+                ["@channel_snowflake"] = settings.WelcomeChannel
+            });
+
+            return 0 > result;
         }
     }
 }

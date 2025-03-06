@@ -1,10 +1,8 @@
 ﻿using Azure.Core;
 using Common.Utils;
-using System.Net;
-using System.Net.Http;
+using System;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Website
 {
@@ -73,7 +71,7 @@ namespace Website
             string clientId = _cVars.GetCVar("discord.client_id", ConsoleVariableType.String, "not known");
             string clientSecret = _cVars.GetCVar("discord.client_secret", ConsoleVariableType.String, "not known");
             string redirectUrl = _cVars.GetCVar("web.root", ConsoleVariableType.String, "http://www.localhost/discord/redirect");
-
+            Console.WriteLine(redirectUrl);
             HttpContent content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "client_id", clientId },
@@ -106,7 +104,7 @@ namespace Website
             using HttpClient httpClient = new();
 
             // Set Authorization header with Bearer token
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             using HttpResponseMessage response = await httpClient.GetAsync($"{API_URL}/users/@me");
 
@@ -140,13 +138,13 @@ namespace Website
             using HttpClient client = new();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            HttpResponseMessage response = await client.GetAsync($"${API_URL}/guilds/{guildId}/members/{userId}");
+            using HttpResponseMessage response = await client.GetAsync($"${API_URL}/guilds/{guildId}/members/{userId}");
 
             if (!response.IsSuccessStatusCode)
                 throw new Exception($"Failed to get user roles: {response.StatusCode}");
 
             string json = await response.Content.ReadAsStringAsync();
-            JsonDocument doc = JsonDocument.Parse(json);
+            using JsonDocument doc = JsonDocument.Parse(json);
             JsonElement root = doc.RootElement;
 
             List<string> roles = root.GetProperty("roles").EnumerateArray()
@@ -166,9 +164,8 @@ namespace Website
 
             using HttpResponseMessage response = await httpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
-            {
                 throw new Exception($"Failed to fetch guild roles. Status: {response.StatusCode}");
-            }
+            
 
             string json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<List<DiscordRole>>(json) ?? new List<DiscordRole>();
@@ -181,6 +178,21 @@ namespace Website
             bool hasPermission = guildRoles.Where(role => userRoles.Contains(role.Id)).Where( role => (role.Permissions & (ulong)permissions) == 1).Any();
 
             return hasPermission;
+        }
+
+        public static async Task<string> GetGuildChannels(string guildId, string accessToken)
+        {
+            using HttpClient httpClient = new();
+
+            using HttpRequestMessage request = new(HttpMethod.Get, $"{API_URL}/guilds/channels");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            using HttpResponseMessage response = await httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("Failed to retrieve guild channels");
+
+            return await response.Content.ReadAsStringAsync();
         }
 
     }

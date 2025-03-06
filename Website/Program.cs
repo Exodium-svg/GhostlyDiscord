@@ -13,7 +13,9 @@ internal class Program
     {
         ConsoleVariables cVars = new("cVars");
         DbSessionManager.Init(cVars);
+        DbGuildManager.Init(cVars);
         DiscordApi.Init(cVars);
+
         string host = cVars.GetCVar<string>("web.host", ConsoleVariableType.String, "127.0.0.1");
         int port = cVars.GetCVar<int>("web.port", ConsoleVariableType.Int, 80);
         //int port = cVars.GetCVar<int>("web.port", ConsoleVariableType.Int, 26652);
@@ -31,6 +33,8 @@ internal class Program
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/redirect", discordEp.Redirect, OnErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/profile", discordEp.Profile, OnErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/guilds", discordEp.Guilds, OnErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/discord/settings/welcome", discordEp.GetWelcomeSettings, OnErrorRoute);
+        server.Routes.PreAuthentication.Static.Add(HttpMethod.POST, "/discord/update-welcome", discordEp.UpdateWelcome, OnErrorRoute);
         server.Routes.PreAuthentication.Static.Add(HttpMethod.GET, "/up/", GetStatisticsRoute, OnErrorRoute);
 
         server.Routes.PreRouting = PreRoute;

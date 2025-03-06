@@ -47,7 +47,7 @@ namespace Common.Database.ModelManagers
             if (conn == null)
                 return false;
 
-            return await conn.ExecuteNonResultProcedure(Procedures.CreateRoleMenu, new Dictionary<string, object>()
+            return await conn.ExecuteNonResultProcedure(Procedures.CreateRoleMenu, new Dictionary<string, object?>()
             {
                 ["@guild_snowflake"] = guildSnowflake,
                 ["@message_snowflake"] = messageSnowflake,
@@ -62,7 +62,7 @@ namespace Common.Database.ModelManagers
             if (conn == null)
                 return false;
 
-            return await conn.ExecuteNonResultProcedure(Procedures.UpdateRoleMenu, new Dictionary<string, object>()
+            return await conn.ExecuteNonResultProcedure(Procedures.UpdateRoleMenu, new Dictionary<string, object?>()
             {
                 ["@id"] = menu.Id,
                 ["@menu_name"] = menu.MenuName,
